@@ -1,3 +1,5 @@
+// 새로운 DB 파일을 불러온다 그 후 users 컬렉션이 반환하는 데이터를 변수에 담는다
+const usersCollection = require("../db").collection("users");
 const validator = require("validator");
 
 let User = function (data) {
@@ -5,13 +7,8 @@ let User = function (data) {
   this.errors = [];
 };
 
-// cleanUp 함수를 상속 시켜준다(유효성 검사 전에 미리 정돈)
 User.prototype.cleanUp = function () {
-  // typeof 함수는 해당 값의 타입을 반환한다
-  // 만약 문자열이 아니라면
   if (typeof this.data.username != "string") {
-    // 유효성 검사 이전에 문자열이 아닌 값을 미리 공백으로 대체해서 무시해준다
-    // validation 함수가 불필요하게 체크하는 것을 방지
     this.data.username = "";
   }
   if (typeof this.data.email != "string") {
@@ -21,11 +18,8 @@ User.prototype.cleanUp = function () {
     this.data.password = "";
   }
 
-  // 만약 모두 문자열이라면
-  // get rid of any bogus properties (data 속성을 덮어씌워서 제거해버린다)
+  // get rid of any bogus properties
   this.data = {
-    // 만약 color : red 와 같은 속성이 있다면 제거해버린다
-    // 동시에 불필요한 공백을 트림하고 소문자로 바꿔준다
     username: this.data.username.trim().toLowerCase(),
     email: this.data.email.trim().toLowerCase(),
     password: this.data.password,
@@ -63,13 +57,20 @@ User.prototype.validate = function () {
 };
 
 User.prototype.register = function () {
-  // cleanup 메서드를 추가해준다
   // Step #1: Validate user data
   this.cleanUp();
   this.validate();
 
   // Step #2: Only if there are no validation errors
   // then save the user data into a database
+  // 이제 에러배열이 비어있다면
+  if (!this.errors.length) {
+    // crud 작업을 해준다. 몽고DB에 새로운 도큐먼트를 생성해준다
+    // 명령어는 insertOne() 이다
+    // 괄호 안에는 우리가 도큐먼트에 우리가 저장할 데이터를 저장한다 (this.data)
+    // 이제 계정을 생성하면 몽고DB에 저장이 된다
+    usersCollection.insertOne(this.data);
+  }
 };
 
 module.exports = User;
