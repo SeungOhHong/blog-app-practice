@@ -1,5 +1,3 @@
-// 이제 유저가 로그인 창에 입력한 정보가 DB에 저장된 정보와 일치 하는지 검사를 해야한다
-// 새로운 라우트를 추가한다
 const usersCollection = require("../db").collection("users");
 const validator = require("validator");
 
@@ -57,28 +55,24 @@ User.prototype.validate = function () {
   }
 };
 
-// login 메서드를 정의해준다
-User.prototype.login = async function (callback) {
-  // 입력된 값이 string인지 확인
-  this.cleanUp();
-  // userCollection 은 우리가 CRUD 작업을 할 몽고 DB 내의 DB 컬렉션이다
-  // findOne({a})  a 에 우리가 몽고 DB에서 찾는 객체 데이터를 정의해준다.
-  // 이 데이터를 찾는데 얼마나 거릴지 모르기 때문에 비동기로 처리해준다
-
-  const attemptedUser = await usersCollection.findOne({
-    username: this.data.username,
+User.prototype.login = function () {
+  return new Promise((resolve, reject) => {
+    this.cleanUp();
+    usersCollection
+      .findOne({ username: this.data.username })
+      .then((attemptedUser) => {
+        if (attemptedUser && attemptedUser.password == this.data.password) {
+          resolve("Congrats!");
+        } else {
+          reject("Invalid username / password.");
+        }
+      })
+      .catch(function () {
+        reject("Please try again later.");
+      });
   });
-  // 만약 매칭되는 유저 네임과 그에 해당하는 비밀번호를 찾았을 경우
-  if (attemptedUser && attemptedUser.password == this.data.password) {
-    // 축하합니다!
-    callback("Congrats!");
-  } else {
-    // 유효하지 않음!
-    callback("Invalid username / password.");
-  }
 };
 
-// 이제 로그인 성공여부에 따라서 브라우저에서 해당 메세지를 콜백해준다
 User.prototype.register = function () {
   // Step #1: Validate user data
   this.cleanUp();
