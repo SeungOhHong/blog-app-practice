@@ -1,4 +1,4 @@
-// npm install bcryptjs
+
 const bcrypt = require("bcryptjs");
 const usersCollection = require("../db").collection("users");
 const validator = require("validator");
@@ -65,8 +65,6 @@ User.prototype.login = function () {
       .then((attemptedUser) => {
         if (
           attemptedUser &&
-          // compareSync(a,b)
-          // a : 아직 해시 되지 않은 값  b: DB에서 해시된 값
           bcrypt.compareSync(this.data.password, attemptedUser.password)
         ) {
           resolve("Congrats!");
@@ -88,10 +86,8 @@ User.prototype.register = function () {
   // Step #2: Only if there are no validation errors
   // then save the user data into a database
   if (!this.errors.length) {
-    // 유저 비밀번호 해싱하기
-    // 1단계 : 솔트 생성하기
+    // hash user password
     let salt = bcrypt.genSaltSync(10);
-    // 2단계: bcrypt 이용하기 hashSync(a,b) a : 해시하기를 원하는 값  , b: 솔트 값
     this.data.password = bcrypt.hashSync(this.data.password, salt);
     usersCollection.insertOne(this.data);
   }
