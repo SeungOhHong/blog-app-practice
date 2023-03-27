@@ -27,7 +27,9 @@ User.prototype.cleanUp = function () {
 };
 
 User.prototype.validate = function () {
-  // DB 관련 로직을 비동기로 처리하기 위해서 async 키워드를 이용한다
+  // validate 함수가 Promise를 리턴하도록 한다
+  // Promise 는 resolve 와 reject 두 개의 인자를 받는다
+  // 또한 화살표 함수를 이용해서 this 키워드가 함수 자기 자신을 가리키도록 해준다
   return new Promise(async (resolve, reject) => {
     if (this.data.username == "") {
       this.errors.push("You must provide a username.");
@@ -57,35 +59,30 @@ User.prototype.validate = function () {
       this.errors.push("Username cannot exceed 30 characters.");
     }
 
-    // 사용자 이름이 valid 할 때에만 DB상에 이미 존재하는 이름인지 체크한다
+    // Only if username is valid then check to see if it's already taken
     if (
-      // 이 세가지의 조건을 만족할 떄에만
       this.data.username.length > 2 &&
       this.data.username.length < 31 &&
       validator.isAlphanumeric(this.data.username)
     ) {
-      // DB로 이미 존재하는지 체크한다 (findOne() 메서드)
-      // DB에 접근하는 작업은 비동기로 처리해야한다. findOne 메서드는 promise를 리턴한다. await 키워드를 이용한다
       let usernameExists = await usersCollection.findOne({
-        // 컬렉션 안에 해당 username이 존재하는지 findOne 한다
         username: this.data.username,
       });
-      // 만약 존재할 경우 errors 배열에 에러 메세지를 추가한다
       if (usernameExists) {
-        this.errors.push("이미 존재하는 사용자명입니다.");
+        this.errors.push("That username is already taken.");
       }
     }
 
-    // valid한 이메일에 한해서만 DB에 접근해서 중복체크를 한다
+    // Only if email is valid then check to see if it's already taken
     if (validator.isEmail(this.data.email)) {
-      // await 키워드로 비동기 처리
       let emailExists = await usersCollection.findOne({
         email: this.data.email,
       });
       if (emailExists) {
-        this.errors.push("이미 존재하는 이메일입니다");
+        this.errors.push("That email is already being used.");
       }
     }
+    // 마지막 라인에 Promise가 해결됐음을 나타내는 resolve() 함수를 추가해준다
     resolve();
   });
 };
@@ -112,12 +109,16 @@ User.prototype.login = function () {
 };
 
 User.prototype.register = function () {
-  // async 키워드
+  // register 함수가 Promise를 리턴하도록 해준다
   return new Promise(async (resolve, reject) => {
     // Step #1: Validate user data
     this.cleanUp();
-    // validate 함수를 비동기 처리했기 때문에 await 키워드를 추가해준다
+    // 이제 validate 함수가 프로미스를 리턴하기 때문에 await 키워드를 이용한다
     await this.validate();
+    // 이로인해서 아래의 register에 관련된 코드 로직이 실행되기 전에 유효성 검사가 이루어질 것 이다.
+    // (유효성 검사가 끝나기 전에는(Promise를 리턴하기 전에) 회원가입과 관련된 함수가 실행되지 않는다)
+
+    // 이제 이 register함수가 어디서 호출 되는지 찾아보자 userController 에서 실행된다
 
     // Step #2: Only if there are no validation errors
     // then save the user data into a database
@@ -126,8 +127,10 @@ User.prototype.register = function () {
       let salt = bcrypt.genSaltSync(10);
       this.data.password = bcrypt.hashSync(this.data.password, salt);
       await usersCollection.insertOne(this.data);
+      // 에러가 없다면 resolve로 프로미스를 해결해준다
       resolve();
     } else {
+      // 에러가 있다면 현재 에러를 reject해준다
       reject(this.errors);
     }
   });

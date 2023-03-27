@@ -1,6 +1,3 @@
-// 이제 회원가입 시에 에러 플레시 메세지를 띄우는 기능을 추가해보자
-// 서버 사이드 유효성 검사 - 보안 측면
-// 클라이언트 사이드 유효성 검사 - 사용자 경험 측면
 const User = require("../models/User");
 
 exports.login = function (req, res) {
@@ -29,23 +26,31 @@ exports.logout = function (req, res) {
 
 exports.register = function (req, res) {
   let user = new User(req.body);
+  // 이제 user.register 함수는 비동기 함수이기 때문에
+  // register 함수의 에러 여부에 따라서 다음 라인 실행 여부를 then catch로 처리해줘야한다
+  // 이 말은 User.js에서 register함수가 Promise를 리턴하도록 해줘야한다는 의미이다
   user
     .register()
+    // user.register() 함수는 Promise를 리턴한다 .then().catch 문을 이용한다
+    // user.register().then().catch()
+    // 복잡해보이지만 user.register().then(()=>{}).catch(()=>{}) 이런 형태이다
+    // promise 가 reject 됐을 경우에는 catch 객체를 반환한다
     .then(() => {
+      // Promise가 해결 됐을 때
+      // 세션 데이터를 로그인 상태로 업데이트 한 후
       req.session.user = { username: user.data.username };
       req.session.save(function () {
+        // 로그인 상태인 베이스 url로 리다이렉트
         res.redirect("/");
       });
     })
+    // Promise 가 미해결 됐을 때
     .catch((regErrors) => {
-      // 만약 회원가입 시 에러가 있을 경우에는
+      // Promise로 리턴되어 들어온 regErrors 배열을 참조한다
       regErrors.forEach(function (error) {
-        // 현재 에러를 'regErrors' 배열에 푸시해준다
         req.flash("regErrors", error);
       });
-      // 위의 DB 작업이 완료 때까지 리다이렉트 되면 안되기 때문에 수동으로 세션을 저장해준다
       req.session.save(function () {
-        // 저장 후 리다이렉트 된다
         res.redirect("/");
       });
     });
@@ -57,7 +62,6 @@ exports.home = function (req, res) {
   } else {
     res.render("home-guest", {
       errors: req.flash("errors"),
-      // regError를 추가해준다.
       regErrors: req.flash("regErrors"),
     });
   }
