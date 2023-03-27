@@ -1,3 +1,6 @@
+// 이제 회원가입 시에 에러 플레시 메세지를 띄우는 기능을 추가해보자
+// 서버 사이드 유효성 검사 - 보안 측면
+// 클라이언트 사이드 유효성 검사 - 사용자 경험 측면
 const User = require("../models/User");
 
 exports.login = function (req, res) {
@@ -5,25 +8,20 @@ exports.login = function (req, res) {
   user
     .login()
     .then(function (result) {
-      // 이제 로그인도 이제 서버가 새로 만든 세션을 인식하고 로그인한 것과 동일한 URL로 리다이렉트하도록 만들어준다
-      // req.session.user는 DB에 접근해서 업데이트 하는 함수이기 때문에 종료 시점을 알 수 없다
       req.session.user = { favColor: "blue", username: user.data.username };
-      // 때문에 세션 데이터를 수동으로 저장하도록 명령한 후에 콜백함수로 res.redirect("/")를 호출한다
-      // 이로서 새로운 데이터를 save하는 작업이 완료 되기 전까지 베이스 url로 redirect되지 않을 것이다
       req.session.save(function () {
         res.redirect("/");
       });
     })
     .catch(function (e) {
-      res.send(e);
+      req.flash("errors", e);
+      req.session.save(function () {
+        res.redirect("/");
+      });
     });
 };
 
 exports.logout = function (req, res) {
-  // session을 destroy() 메서드를 이용해서 파괴해준다
-  // 그 후 베이스 url로 돌아가도록 콜백함수로 redirect 하도록 설정해준다
-  // destroy 메서드는 DB에 접근해서 세션을 파괴하는 함수이기 때문에 비동기로 처리해야한다
-
   req.session.destroy(function () {
     res.redirect("/");
   });
@@ -31,18 +29,36 @@ exports.logout = function (req, res) {
 
 exports.register = function (req, res) {
   let user = new User(req.body);
-  user.register();
-  if (user.errors.length) {
-    res.send(user.errors);
-  } else {
-    res.send("Congrats, there are no errors.");
-  }
+  user
+    .register()
+    .then(() => {
+      req.session.user = { username: user.data.username };
+      req.session.save(function () {
+        res.redirect("/");
+      });
+    })
+    .catch((regErrors) => {
+      // 만약 회원가입 시 에러가 있을 경우에는
+      regErrors.forEach(function (error) {
+        // 현재 에러를 'regErrors' 배열에 푸시해준다
+        req.flash("regErrors", error);
+      });
+      // 위의 DB 작업이 완료 때까지 리다이렉트 되면 안되기 때문에 수동으로 세션을 저장해준다
+      req.session.save(function () {
+        // 저장 후 리다이렉트 된다
+        res.redirect("/");
+      });
+    });
 };
 
 exports.home = function (req, res) {
   if (req.session.user) {
     res.render("home-dashboard", { username: req.session.user.username });
   } else {
-    res.render("home-guest");
+    res.render("home-guest", {
+      errors: req.flash("errors"),
+      // regError를 추가해준다.
+      regErrors: req.flash("regErrors"),
+    });
   }
 };
