@@ -1,14 +1,8 @@
+// sign out 버튼 클릭 시 현재 세션을 만료 (로그아웃) 시키기
 const bcrypt = require("bcryptjs");
-// 우리는 usersCollection 변수를 만들고 재사용 가능한 DB 파일을 사용했다.
-// 이 db.js파일은 이제 데이터베이스 대신 MongoDB 클라이언트(client)를 내보내고 있기 때문에 이  require 뒤에 .db() 를 추가해줘야한다.
-// 이제 몽고DB로 가서 리프레쉬해보면 Session 컬렉션이 생성 되어있을 것이다
-// 쿠키를 확인해볼 수 있다
-// id는 유니크한 식별값이다
-
 const usersCollection = require("../db").db().collection("users");
 const validator = require("validator");
 
-//웹 브라우저가 HTTP 요청을 보낼 때마다 현재 도메인에 대한 모든 쿠키를 함께 보낼 것이기 때문에 이제 서버가 브라우저 세션을 기억하거나 신뢰할 수 있게 된다.
 let User = function (data) {
   this.data = data;
   this.errors = [];
