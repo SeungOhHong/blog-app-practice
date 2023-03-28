@@ -1,8 +1,8 @@
-<!-- ejs 함수이다 includes 폴더 내에 header를 불러와준다 -->
 <%- include('includes/header') %>
 
 <div class="container py-md-5 container--narrow">
   <div class="text-center">
+    <!-- 이제 username 프로퍼티로 접근하는 것이 아니라 user객체 내의 username 프로퍼티로 접근해야한다. 왜냐하면 app.js 에서 라우팅 이전에 모든 요청에 대해서 user 객체로 받아오기로 정의했기 때문이다 -->
     <h2>Hello <strong><%= user.username %></strong>, your feed is empty.</h2>
     <p class="lead text-muted">
       Your feed displays the latest posts from the people you follow. If you
