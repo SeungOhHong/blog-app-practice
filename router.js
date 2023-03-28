@@ -16,4 +16,12 @@ router.get(
   postController.viewCreateScreen
 );
 
+// /create-post 경로에 대한 post 요청 라우터이다
+router.post(
+  "/create-post",
+  userController.mustBeLoggedIn,
+  // postController 에서 정의해준ㄷ
+  postController.create
+);
+
 module.exports = router;
