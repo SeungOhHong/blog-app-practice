@@ -1,0 +1,44 @@
+<!-- 유저 생성한 포스트에 대한 HTML이다 -->
+<%- include('includes/header') %>
+
+<div class="container py-md-5 container--narrow">
+  <div class="d-flex justify-content-between">
+    <!-- 전달받은 DB post 데이터로 다이나믹하게 처리해준다 -->
+    <h2><%= post.title %></h2>
+    <span class="pt-2">
+      <a
+        href="#"
+        class="text-primary mr-2"
+        data-toggle="tooltip"
+        data-placement="top"
+        title="Edit"
+        ><i class="fas fa-edit"></i
+      ></a>
+      <form class="delete-post-form d-inline" action="#" method="POST">
+        <button
+          class="delete-post-button text-danger"
+          data-toggle="tooltip"
+          data-placement="top"
+          title="Delete"
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </form>
+    </span>
+  </div>
+
+  <p class="text-muted small mb-4">
+    <a href="#"
+      ><img
+        class="avatar-tiny"
+        src="https://gravatar.com/avatar/f64fc44c03a8a7eb1d52502950879659?s=128"
+    /></a>
+    <!-- 다이나믹하게 DB에 저장된 시간데이터로 처리 (Month의 경우 1월이 0부터 시작이라서 +1을 해준다) -->
+    Posted by <a href="#">kittydoe</a> on <%= post.createdDate.getMonth() + 1
+    %>/<%= post.createdDate.getDate() %>/<%= post.createdDate.getFullYear() %>
+  </p>
+  <!-- 다이나믹하게 본문 내용처리 -->
+  <div class="body-content"><%= post.body %></div>
+</div>
+
+<%- include('includes/footer') %>
